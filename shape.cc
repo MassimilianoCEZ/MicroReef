@@ -1,5 +1,12 @@
 
-class S2d // this class defines a point on the plane where we plot our coral reef
+
+struct S2d // (plus robuste au bugs; according to "specification" page 10/12)
 {
-    
+    double x = 0.;
+    double y = 0.;
+};
+
+//pleliminary main function to test code
+int main() {
+    S2d;
 }

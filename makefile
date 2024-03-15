@@ -6,7 +6,7 @@ CXXFILES = shape.cc message.cc microReef.cc testShape.cc
 OFILES = $(CXXFILES:.cc=.o)
 
 # Definition de la premiere regle
-# this has the name of the executable file
+# this has the name "testShape" of the executable file
 
 testShape: $(OFILES)
 	$(CXX) $(OFILES) -o testShape
@@ -21,12 +21,15 @@ depend:
 	 ) >Makefile.new
 	@mv Makefile.new Makefile
 
+# -- deletes object modules and executables (use command: "make clean")
+
 clean:
 	@echo " *** ERASE OBJET MODULE(S) AND EXECUTABLE(S) ***"
 	@/bin/rm -f *.o *.x *.cc~ *.h~ testShape
 
 #
-# -- Automatically generated dependancies
+# -- Automatically generated dependancies (use command: "make depend")
+# -- To run program use command: "./testshape"
 #
 # DO NOT DELETE THIS LINE
 shape.o: shape.cc shape.h

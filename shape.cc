@@ -1,10 +1,16 @@
 #include "shape.h"
 
-// ASK DAniel for wether to use struc or vector??? if yes how do we define it?? i dont understand the "specifications"
-struct S2d // (plus robuste au bugs; according to "specification" page 10/12 rather than using class)
+struct S2d // (better against bugs; according to "specification" page 10/12 rather than using class)
 {
     double x = 0.;
     double y = 0.;
 };
 
+class Segment{
+private:
+    S2d base;
+    double angle;
+    double lenght;
 
+public:
+};

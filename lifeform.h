@@ -68,16 +68,13 @@ public:
 class Scavenger : public Lifeform {
 private:
     double radius;
-
     Status_sca statusSca;
-
     unsigned int corIdCib;
     void checkRadius();
 
 public:
     Scavenger(S2d posInp = {0, 0}, unsigned ageInp = 0, double radiusInp = 0,
               bool statusScaInp = 0, unsigned int corIdInp = 0);
-
     unsigned int getCorIdCib() const;
     Status_sca getStatusSca() const;
 };

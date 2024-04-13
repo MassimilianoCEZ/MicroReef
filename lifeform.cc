@@ -76,3 +76,7 @@ void Scavenger::checkRadius() {
 }
 
 Status_sca Scavenger::getStatusSca() const { return statusSca; }
+
+
+
+

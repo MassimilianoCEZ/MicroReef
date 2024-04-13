@@ -33,13 +33,14 @@ void Simulation::readFile(char *file_name) {
         checkIntersect();
     } else {
         cout << "failed" << endl;
+        exit(EXIT_FAILURE);
     }
 }
 
 void Simulation::lineDecoding(string line) {
     enum ReadingState { COUNTALG, ALG, COUNTCOR, COR, SEG, COUNTSCA, SCA };
     static int state(COUNTALG);
-    static S2d posAlg, posCor, posSca;
+    static S2d pAlg, pCor, pSca;
     static unsigned ageAlg, ageCor, ageSca, id, corIdCib;
     static double angle, length, radius;
     static vector<Segment> corSegments;
@@ -54,10 +55,7 @@ void Simulation::lineDecoding(string line) {
         break;
     case ALG:
         while (i < counterAlg) {
-            if (data >> posAlg.x >> posAlg.y >> ageAlg) {
-                unique_ptr<Algae> ptr(new Algae({posAlg.x, posAlg.y}, ageAlg));
-                setAlgae(move(ptr));
-            }
+            createAlgae(data, pAlg, ageAlg);
             ++i;
             break;
         }
@@ -69,7 +67,7 @@ void Simulation::lineDecoding(string line) {
         break;
     case COR:
         if (j < counterCor) {
-            if (data >> posCor.x >> posCor.y >> ageCor >> id >> statusCor >>
+            if (data >> pCor.x >> pCor.y >> ageCor >> id >> statusCor >>
                 dirRotCor >> statusDev >> nbSeg) {
                 countSeg = 0;
                 state = SEG;
@@ -82,12 +80,10 @@ void Simulation::lineDecoding(string line) {
             if (data >> angle >> length) {
                 Segment seg;
                 if (countSeg == 0) {
-                    seg = {angle, length, posCor};
-                    corSegments.push_back(seg);
+                    addSegments(corSegments, angle, length, pCor, seg);
                 } else {
                     previous = corSegments.back().getEnd();
-                    seg = {angle, length, previous};
-                    corSegments.push_back(seg);
+                    addSegments(corSegments, angle, length, previous, seg);
                 }
                 checkLength(seg, id);
                 checkAngle(seg, id);
@@ -95,10 +91,8 @@ void Simulation::lineDecoding(string line) {
             }
             ++countSeg;
             if (countSeg == nbSeg) {
-                unique_ptr<Coral> ptr(new Coral({posCor.x, posCor.y}, ageCor, id,
-                                                statusCor, dirRotCor, statusDev, nbSeg,
-                                                corSegments));
-                setCoral(move(ptr));
+                createCoral(pCor,ageCor, id, statusCor, dirRotCor, statusDev, nbSeg,
+                            corSegments);
                 state = COR;
                 if (j == counterCor)
                     state = COUNTSCA;
@@ -111,15 +105,11 @@ void Simulation::lineDecoding(string line) {
         break;
     case SCA:
         while (k < counterSca) {
-            if (data >> posSca.x >> posSca.y >> ageSca >> radius >> statusSca) {
+            if (data >> pSca.x >> pSca.y >> ageSca >> radius >> statusSca) {
                 if (data >> corIdCib) {
-                    unique_ptr<Scavenger> ptr(new Scavenger(
-                        {posSca.x, posSca.y}, ageSca, radius, statusSca, corIdCib));
-                    setScavenger(move(ptr));
+                    createScavenger(data,pSca,ageSca,radius,statusSca,corIdCib);
                 } else {
-                    unique_ptr<Scavenger> ptr(new Scavenger(
-                        {posSca.x, posSca.y}, ageSca, radius, statusSca));
-                    setScavenger(move(ptr));
+                    createScavenger(data,pSca,ageSca,radius,statusSca);
                 }
             }
             ++k;
@@ -140,6 +130,43 @@ void Simulation::setCoral(unique_ptr<Coral> coralInp) {
 void Simulation::setScavenger(unique_ptr<Scavenger> scavengerInp) {
     this->scavengerVect.push_back(move(scavengerInp));
 }
+
+void Simulation::createAlgae(istringstream& data, S2d pAlg, int ageAlg){
+    if (data >> pAlg.x >> pAlg.y >> ageAlg) {
+        unique_ptr<Algae> ptr(new Algae({pAlg.x, pAlg.y}, ageAlg));
+        setAlgae(move(ptr));
+    }
+}
+
+void Simulation::createScavenger(istringstream& data, S2d pSca, int ageSca, int radius,
+                                 bool statusSca, int corIdCib) {
+    unique_ptr<Scavenger> ptr(new Scavenger(
+        {pSca.x, pSca.y}, ageSca, radius, statusSca, corIdCib));
+    setScavenger(move(ptr));
+}
+
+void Simulation::createScavenger(istringstream& data, S2d pSca, int ageSca, int radius,
+                                 bool statusSca){
+    unique_ptr<Scavenger> ptr(new Scavenger(
+        {pSca.x, pSca.y}, ageSca, radius, statusSca));
+    setScavenger(move(ptr));
+}
+
+void Simulation::addSegments(vector<Segment>& corSegments, double angle, double length, 
+                        S2d pCor, Segment& seg){
+    seg =  {angle, length, pCor};
+    corSegments.push_back(seg);
+}
+
+void Simulation::createCoral(S2d pCor, int ageCor, int id, bool statusCor, 
+                        bool dirRotCor, bool statusDev, int nbSeg, vector<Segment> corSegments){
+    unique_ptr<Coral> ptr(new Coral({pCor.x, pCor.y}, ageCor, id, statusCor, dirRotCor,
+                                    statusDev, nbSeg, corSegments));
+    setCoral(move(ptr));
+}
+
+
+
 
 void Simulation::checkId() {
     for (auto &coral1 : coralVect) {

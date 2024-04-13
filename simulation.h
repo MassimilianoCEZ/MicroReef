@@ -19,6 +19,15 @@ public:
     void setAlgae(std::unique_ptr<Algae> algaeInp);
     void setCoral(std::unique_ptr<Coral> coralInp);
     void setScavenger(std::unique_ptr<Scavenger> scavengerInp);
+    void createAlgae(std::istringstream& data, S2d pAlg, int ageAlg);
+    void createScavenger(std::istringstream& data, S2d pSca, int ageSca, int radius,
+                        bool statusSca, int corIdCib);
+    void createScavenger(std::istringstream& data, S2d pSca, int ageSca, int radius,
+                        bool statusSca);
+    void createCoral(S2d pCor, int ageCor, int id, bool statusCor, bool dirRotCor,
+                     bool statusDev, int nbSeg, std::vector<Segment> corSegments);
+    void addSegments(std::vector<Segment>& corSegments, double angle, double length, 
+                     S2d pCor, Segment& seg);
 
 private:
     std::vector<std::unique_ptr<Algae>> algaeVect;

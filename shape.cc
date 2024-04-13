@@ -62,8 +62,6 @@ bool onSegment(S2d p, S2d q, S2d r, bool approx)
     double norme = sqrt(pow(r.x - p.x, 2) + pow(r.y - p.y, 2));
     // projection pr on pq
     double x = s / norme;
-
-    cout << "x is : " << x << endl;
     
     if ((0 <= x) && (x <= norme))
     {

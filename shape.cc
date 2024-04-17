@@ -14,6 +14,14 @@ double Circle::getRadius() const { return radius; }
 
 S2d Circle::getBase() const { return base; }
 
+Rect::Rect(double heightInp, double widthInp, S2d baseInp) : height(heightInp), width(widthInp), base(baseInp) {}
+
+double Rect::getHeight() const { return height; }
+
+double Rect::getWidth() const { return width; }
+
+S2d Rect::getBase() const { return base; }
+
 Segment::Segment(double angleInp, double lengthInp, S2d baseInp)
     : angle(angleInp), length(lengthInp), base(baseInp)
 {

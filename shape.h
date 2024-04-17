@@ -23,8 +23,21 @@ private:
     S2d base;
 
 public:
-    Circle(double radiusInp = 0.0, S2d baseInp = S2d());
+    Circle(double radiusInp = 0., S2d baseInp = S2d());
     double getRadius() const;
+    S2d getBase() const;
+};
+
+class Rect {
+private:
+    S2d base; // some corner will serve as base !! which one is a convention of ours to be specified
+    double height;
+    double width;
+
+public:
+    Rect(double height = 0., double width = 0., S2d baseInp = S2d());
+    double getHeight() const; 
+    double getWidth() const;
     S2d getBase() const;
 };
 

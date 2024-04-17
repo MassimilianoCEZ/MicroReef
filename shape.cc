@@ -5,7 +5,6 @@
  * version 18
  */
 #include "shape.h"
-#include "constantes.h"
 #include <cmath>
 using namespace std;
 

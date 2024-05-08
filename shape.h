@@ -1,15 +1,17 @@
 /*
- *shape.h
+ * shape.h
  * Ferrulli Massimiliano
  * Waldorff Carl Johan Traeholt
  * version 18
  */
+
 #ifndef SHAPE_H
 #define SHAPE_H
 
 #include <cmath>
 #include <iostream>
 #include <string>
+#include "graphic.h"
 
 constexpr double epsil_zero(0.5);
 
@@ -30,15 +32,17 @@ public:
 
 class Rect {
 private:
-    S2d base; // some corner will serve as base !! which one is a convention of ours to be specified
+    S2d center; 
+    S2d corner;
     double height;
     double width;
 
 public:
-    Rect(double height = 0., double width = 0., S2d baseInp = S2d());
+    Rect(double height = 0., double width = 0., S2d centerInp = S2d());
     double getHeight() const; 
     double getWidth() const;
-    S2d getBase() const;
+    S2d getCenter() const;
+    S2d getCorner() const; 
 };
 
 class Segment {
@@ -57,9 +61,14 @@ public:
     S2d getEnd() const;
 };
 
-double orientation(S2d p, S2d q, S2d r, bool approx = 0);
+double orientation(S2d p, S2d q, S2d r);
 double angularDifference(double alpha, double beta);
-bool onSegment(S2d p, S2d q, S2d r, bool approx = 0);
-bool doIntersect(S2d p1, S2d q1, S2d p2, S2d q2, bool approx = 0);
+bool onSegment(S2d p, S2d q, S2d r);
+bool doIntersect(Segment s1, Segment s2);
 bool supSegment(Segment segInp1, Segment segInp2);
+void drawSegment(const Segment& segInp, const size_t& colorIndex);
+void drawCircle(const Circle& circleInp, const size_t& colorIndex);
+void drawRect(const Rect& rectInp, const size_t& colorIndex);
+double dotP(S2d a, S2d b, S2d c, S2d d);
+
 #endif

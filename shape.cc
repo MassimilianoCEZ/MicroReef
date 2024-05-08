@@ -2,11 +2,14 @@
  * shape.cc
  * Ferrulli Massimiliano
  * Waldorff Carl Johan Traeholt
- * version 18
+ * version 27
+ * 50% Massimiliano 50% Carl
  */
 #include "shape.h"
 #include <cmath>
 using namespace std;
+
+static double zero(0);
 
 Circle::Circle(double radiusInp, S2d baseInp) : radius(radiusInp), base(baseInp) {}
 
@@ -14,13 +17,21 @@ double Circle::getRadius() const { return radius; }
 
 S2d Circle::getBase() const { return base; }
 
-Rect::Rect(double heightInp, double widthInp, S2d baseInp) : height(heightInp), width(widthInp), base(baseInp) {}
+Rect::Rect(double heightInp, double widthInp, S2d centerInp) 
+    : height(heightInp), width(widthInp), center(centerInp) {}
 
 double Rect::getHeight() const { return height; }
 
 double Rect::getWidth() const { return width; }
 
-S2d Rect::getBase() const { return base; }
+S2d Rect::getCenter() const { return center; }
+
+S2d Rect::getCorner() const {
+    S2d corner;
+    corner.x = center.x - width/2.;
+    corner.y = center.y - height/2.;
+    return corner;
+ }
 
 Segment::Segment(double angleInp, double lengthInp, S2d baseInp)
     : angle(angleInp), length(lengthInp), base(baseInp)
@@ -56,70 +67,47 @@ double angularDifference(double alpha, double beta)
     return phi;
 }
 
-bool onSegment(S2d p, S2d q, S2d r, bool approx)
-{
-    // if (q.x <= max(p.x, r.x) && q.x >= min(p.x, r.x) && q.y <= max(p.y, r.y) &&
-    //     q.y >= min(p.y, r.y)) {
-    //     return true;
-    //}
 
-    // scalar product pr.pq
-    double s = (r.x - p.x) * (q.x - p.x) + (r.y - p.y) * (q.y - p.y);
-    // norme pr
-    double norme = sqrt(pow(r.x - p.x, 2) + pow(r.y - p.y, 2));
-    // projection pr on pq
-    double x = s / norme;
-    
-    if ((0 <= x) && (x <= norme))
-    {
-        return true;
-    }
-
-    if ((-epsil_zero <= x) && (x <= norme + epsil_zero) && (approx == 1))
-    {
-        return true;
-    }
-
-    return false;
+bool onSegment(S2d p, S2d q, S2d r){
+	double s(dotP(p, r, p, q));
+	double norm(sqrt(dotP(p, r, p, r)));
+	double x(s / norm);
+	if ((-zero <= x) && (x <= (norm + zero))){
+		return true;
+	}
+	return false;
 }
 
-double orientation(S2d p, S2d q, S2d r, bool approx)
-{
-    double val = ((q.y - p.y) * (r.x - q.x)) - ((q.x - p.x) * (r.y - q.y));
-    double distR = val / sqrt(pow(q.x - p.x, 2) + pow(q.y - p.y, 2));
-    if (approx)
-    {
-        if (fabs(distR) < epsil_zero)
-            return 0;
-    }
-    else
-    {
-        if (distR == 0)
-            return 0;
-    }
-    return (distR > 0) ? 1 : 2;
+double orientation(S2d p, S2d q, S2d r){
+	double val = (q.y - p.y) * (r.x - q.x) -
+				 (q.x - p.x) * (r.y - q.y);
+
+	double distance = val / (sqrt(pow((q.y - p.y), 2)+pow((q.x - p.x), 2)));
+
+	if (abs(distance) <= zero){
+		return 0;
+	}
+
+	return (distance >= zero) ? 1 : 2;
 }
 
-bool doIntersect(S2d p1, S2d q1, S2d p2, S2d q2, bool approx)
-{
-    int o1 = orientation(p1, q1, p2, approx);
-    int o2 = orientation(p1, q1, q2, approx);
-    int o3 = orientation(p2, q2, p1, approx);
-    int o4 = orientation(p2, q2, q1, approx);
-
-    if (o1 != o2 && o3 != o4)
-        return true;
-    if (o1 == 0 && onSegment(p1, p2, q1, approx))
-        return true;
-    if (o2 == 0 && onSegment(p1, q2, q1, approx))
-        return true;
-    if (o3 == 0 && onSegment(p2, p1, q2, approx))
-        return true;
-    if (o4 == 0 && onSegment(p2, q1, q2, approx))
-        return true;
-
-    return false;
+bool doIntersect(Segment s1, Segment s2){
+	S2d p1 = s1.getBase();
+	S2d q1 = s1.getEnd();
+	S2d p2 = s2.getBase();
+	S2d q2 = s2.getEnd();
+	double o1 = orientation(p1, q1, p2);
+	double o2 = orientation(p1, q1, q2);
+	double o3 = orientation(p2, q2, p1);
+	double o4 = orientation(p2, q2, q1);
+	if (o1 != o2 && o3 != o4)  return true;
+	if (o1 == 0 && onSegment(p1, p2, q1))  return true;
+	if (o2 == 0 && onSegment(p1, q2, q1))  return true;
+	if (o3 == 0 && onSegment(p2, p1, q2))  return true;
+	if (o4 == 0 && onSegment(p2, q1, q2))  return true;
+	return false;
 }
+
 
 bool supSegment(Segment segInp1, Segment segInp2)
 {
@@ -129,3 +117,27 @@ bool supSegment(Segment segInp1, Segment segInp2)
     }
     return false;
 }
+
+void drawSegment(const Segment& segInp, const size_t& colorIndex) {
+    graphic_draw_segment(segInp.getBase().x, segInp.getBase().y, segInp.getEnd().x, 
+                          segInp.getEnd().y, colorIndex);
+}
+
+void drawCircle(const Circle& circleInp, const size_t& colorIndex) {
+    graphicDrawCircle(circleInp.getBase().x, circleInp.getBase().y,
+                       circleInp.getRadius(), colorIndex);
+}
+
+void drawRect(const Rect& rectInp, const size_t& colorIndex) {
+    graphicDrawRect(rectInp.getCenter().x, rectInp.getCenter().y, rectInp.getWidth(), 
+                     rectInp.getHeight(), colorIndex);
+}
+
+
+double dotP(S2d a, S2d b, S2d c, S2d d){
+	double x1 = b.x - a.x;
+	double y1 = b.y - a.y;
+	double x2 = d.x - c.x;
+	double y2 = d.y - c.y;
+	return x1 * x2 + y1 * y2;
+};

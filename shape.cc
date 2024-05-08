@@ -68,21 +68,32 @@ double angularDifference(double alpha, double beta)
 }
 
 
-bool onSegment(S2d p, S2d q, S2d r){
+bool onSegment(S2d p, S2d q, S2d r, bool withEpsil){
 	double s(dotP(p, r, p, q));
 	double norm(sqrt(dotP(p, r, p, r)));
 	double x(s / norm);
+    double zero(0);
+
+    if(withEpsil){
+        zero = epsil_zero;
+    }
+
 	if ((-zero <= x) && (x <= (norm + zero))){
 		return true;
 	}
+    
 	return false;
 }
 
-double orientation(S2d p, S2d q, S2d r){
+double orientation(S2d p, S2d q, S2d r, bool withEpsil){
 	double val = (q.y - p.y) * (r.x - q.x) -
 				 (q.x - p.x) * (r.y - q.y);
+    double distance = val / (sqrt(pow((q.y - p.y), 2)+pow((q.x - p.x), 2)));
+    double zero(0);
 
-	double distance = val / (sqrt(pow((q.y - p.y), 2)+pow((q.x - p.x), 2)));
+    if(withEpsil){
+        zero = epsil_zero;
+    }
 
 	if (abs(distance) <= zero){
 		return 0;
@@ -91,20 +102,20 @@ double orientation(S2d p, S2d q, S2d r){
 	return (distance >= zero) ? 1 : 2;
 }
 
-bool doIntersect(Segment s1, Segment s2){
+bool doIntersect(Segment s1, Segment s2, bool withEpsil){
 	S2d p1 = s1.getBase();
 	S2d q1 = s1.getEnd();
 	S2d p2 = s2.getBase();
 	S2d q2 = s2.getEnd();
-	double o1 = orientation(p1, q1, p2);
-	double o2 = orientation(p1, q1, q2);
-	double o3 = orientation(p2, q2, p1);
-	double o4 = orientation(p2, q2, q1);
+	double o1 = orientation(p1, q1, p2, withEpsil);
+	double o2 = orientation(p1, q1, q2, withEpsil);
+	double o3 = orientation(p2, q2, p1, withEpsil);
+	double o4 = orientation(p2, q2, q1, withEpsil);
 	if (o1 != o2 && o3 != o4)  return true;
-	if (o1 == 0 && onSegment(p1, p2, q1))  return true;
-	if (o2 == 0 && onSegment(p1, q2, q1))  return true;
-	if (o3 == 0 && onSegment(p2, p1, q2))  return true;
-	if (o4 == 0 && onSegment(p2, q1, q2))  return true;
+	if (o1 == 0 && onSegment(p1, p2, q1, withEpsil))  return true;
+	if (o2 == 0 && onSegment(p1, q2, q1, withEpsil))  return true;
+	if (o3 == 0 && onSegment(p2, p1, q2, withEpsil))  return true;
+	if (o4 == 0 && onSegment(p2, q1, q2, withEpsil))  return true;
 	return false;
 }
 

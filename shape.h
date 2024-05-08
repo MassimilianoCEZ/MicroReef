@@ -61,10 +61,10 @@ public:
     S2d getEnd() const;
 };
 
-double orientation(S2d p, S2d q, S2d r);
+double orientation(S2d p, S2d q, S2d r, bool withEpsil = false);
 double angularDifference(double alpha, double beta);
-bool onSegment(S2d p, S2d q, S2d r);
-bool doIntersect(Segment s1, Segment s2);
+bool onSegment(S2d p, S2d q, S2d r, bool withEpsil = false);
+bool doIntersect(Segment s1, Segment s2, bool withEpsil = false);
 bool supSegment(Segment segInp1, Segment segInp2);
 void drawSegment(const Segment& segInp, const size_t& colorIndex);
 void drawCircle(const Circle& circleInp, const size_t& colorIndex);

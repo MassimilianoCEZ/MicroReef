@@ -62,6 +62,9 @@ private:
     void checkPosAgeAlg(bool& errors);
     void checkPosAgeCor(bool& errors);
     void checkPosAgeRadiusSca(bool& errors);
+    void checkAlgMaxAge(size_t i);
+    void checkCorMaxAge(size_t i);
+    void checkScaMaxAge(size_t i);
 };
 
 void drawSimulation(const Simulation& simInp);

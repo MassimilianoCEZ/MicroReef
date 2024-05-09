@@ -338,10 +338,7 @@ void drawSimulation(const Simulation& simInp) {
 void Simulation::update(const bool& spawnAlgae) { // chop into smaller functions of simulation!!
     for(size_t i(0); i < algaeVect.size(); ++i){ // temporary note increment age and death of age
         algaeVect[i]->setAge(algaeVect[i]->getAge() + 1);
-        if(algaeVect[i]->getAge() >= max_life_alg){
-           swap(algaeVect[i], algaeVect[algaeVect.size() - 1]);
-           algaeVect.pop_back();
-        }
+        checkAlgMaxAge(i);
     }
     double algX, algY;
     if (spawnAlgae) {
@@ -355,7 +352,6 @@ void Simulation::update(const bool& spawnAlgae) { // chop into smaller functions
         }
     }
     // increment age + increment angle +  death of age coral
-    
     for(size_t i(0); i < coralVect.size(); ++i){ // temporary note increment age and death of age
         coralVect[i]->updateAngle();
         // function in simulation for change of dirRotCor (if any error wht new testing method!!)
@@ -365,14 +361,38 @@ void Simulation::update(const bool& spawnAlgae) { // chop into smaller functions
                             // check intersection
         
         coralVect[i]->setAge(coralVect[i]->getAge() + 1);
-        if(coralVect[i]->getAge() >= max_life_cor){
-           swap(coralVect[i], coralVect[coralVect.size() - 1]);
-           coralVect.pop_back();
-        }
+        checkCorMaxAge(i);
     }
+
+    for(size_t i(0); i < scavengerVect.size(); ++i){
+        scavengerVect[i]->setAge(scavengerVect[i]->getAge() + 1);
+        checkScaMaxAge(i);
+    }
+
     // increment age and death of age scavenger
 }
 
+void Simulation::checkCorMaxAge(size_t i){
+    if(coralVect[i]->getAge() >= max_life_cor){
+       swap(coralVect[i], coralVect[coralVect.size() - 1]);
+       coralVect.pop_back();
+    }
+}
+
+
+void Simulation::checkAlgMaxAge(size_t i){
+    if(algaeVect[i]->getAge() >= max_life_alg){
+       swap(algaeVect[i], algaeVect[algaeVect.size() - 1]);
+       algaeVect.pop_back();
+    }
+}
+
+void Simulation::checkScaMaxAge(size_t i){
+    if(scavengerVect[i]->getAge() >= max_life_sca){
+       swap(scavengerVect[i], scavengerVect[scavengerVect.size() - 1]);
+       scavengerVect.pop_back();
+    }
+}
 
 
 unsigned int Simulation::getNbCor(){

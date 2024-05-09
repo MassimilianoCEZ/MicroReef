@@ -153,3 +153,6 @@ void drawSca(const Scavenger& scaInp) {
     drawCircle(circleSca, RED);
 }
 
+
+
+

@@ -12,6 +12,7 @@
 int main(int argc, char *argv[])
 {
     Simulation simulation;
+    simulation.readFile(argv[1], true);
     auto app = Gtk::Application::create();
 	return app->make_window_and_run<Gui>(1, argv, simulation);
 }

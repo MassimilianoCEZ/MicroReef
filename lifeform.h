@@ -59,6 +59,7 @@ public:
           bool statusCorInp = 1, bool dirRotCorInp = 0, bool statusDevInp = 0,
           unsigned int nbSegInp = 0, 
           std::vector<Segment> segments = std::vector<Segment>());
+    void updateAngle(); // new
     void setSegment(Segment segInp);
     const std::vector<Segment> &getCorSegments() const;
     Segment getSegment(unsigned i);

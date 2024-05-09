@@ -92,6 +92,26 @@ Coral::Coral(S2d posInp, unsigned ageInp, unsigned int idInp, bool statusCorInp,
     statusDev = (statusDevInp) ? REPRO : EXTEND;
 }
 
+void Coral::updateAngle() { // updates the angle of one coral dependant of its state of dirRotCor (trigo or invtrigo)
+    
+    
+    //if(EXTREM){ change direction}
+
+    Segment* lastSeg (&corSegments[corSegments.size()-1]);
+    double a(0);
+    double l((*lastSeg).getLength());
+    S2d b((*lastSeg).getBase());
+
+    if(dirRotCor){ // if invtrigo
+        a = (*lastSeg).getAngle() - delta_rot;
+
+    } else { // if trigo
+        a = (*lastSeg).getAngle() + delta_rot;
+    }
+    (*lastSeg) = Segment(a,l,b);
+
+};
+
 void Coral::setSegment(Segment segInp) { corSegments.push_back(segInp); }
 
 

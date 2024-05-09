@@ -293,10 +293,10 @@ void Simulation::checkAngle(const Segment &segmentInp, const int &idInp, bool& e
     }
 }
 
-void Simulation::checkExtremity(const S2d &posInp, const int &idInp, bool approx, 
+void Simulation::checkExtremity(const S2d &posInp, const int &idInp, bool withEpsil, 
                                 bool& errors) {
     bool error(false);
-    if (approx == true) {
+    if (withEpsil == true) {
         if ((posInp.x > dmax - epsil_zero) or (posInp.y > dmax - epsil_zero) or
             (posInp.x < epsil_zero) or (posInp.y < epsil_zero)) {
             error = true;
@@ -335,8 +335,8 @@ void drawSimulation(const Simulation& simInp) {
     }
 }
 
-void Simulation::update(const bool& spawnAlgae) {
-    for(size_t i(0); i < algaeVect.size(); ++i){
+void Simulation::update(const bool& spawnAlgae) { // chop into smaller functions of simulation!!
+    for(size_t i(0); i < algaeVect.size(); ++i){ // temporary note increment age and death of age
         algaeVect[i]->setAge(algaeVect[i]->getAge() + 1);
         if(algaeVect[i]->getAge() >= max_life_alg){
            swap(algaeVect[i], algaeVect[algaeVect.size() - 1]);
@@ -354,6 +354,23 @@ void Simulation::update(const bool& spawnAlgae) {
             createAlgae({algX, algY}, 1);
         }
     }
+    // increment age + increment angle +  death of age coral
+    
+    for(size_t i(0); i < coralVect.size(); ++i){ // temporary note increment age and death of age
+        coralVect[i]->updateAngle();
+        // function in simulation for change of dirRotCor (if any error wht new testing method!!)
+            //errortests per coral : 
+                            // check extremity (for the edges)
+                            // check superpos
+                            // check intersection
+        
+        coralVect[i]->setAge(coralVect[i]->getAge() + 1);
+        if(coralVect[i]->getAge() >= max_life_cor){
+           swap(coralVect[i], coralVect[coralVect.size() - 1]);
+           coralVect.pop_back();
+        }
+    }
+    // increment age and death of age scavenger
 }
 
 

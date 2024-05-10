@@ -77,7 +77,11 @@ void Simulation::lineDecoding(string line, bool open, bool& errors) {
     switch (state) {
     case COUNTALG:
         if (!(data >> countAlg)) break;
-        state = ALG;
+        if (countAlg == 0) {
+            state = COUNTCOR; 
+            if (!(data >> countCor)) break; 
+            state = COR;
+        } else state = ALG;
         break;
     case ALG:
         while (i < countAlg) {
@@ -241,18 +245,14 @@ void Simulation::checkIntersect(bool &errors) {
             const auto& segments2 = coralVect[j]->getCorSegments();
             for (size_t index1 = 0; index1 < segments1.size(); ++index1) {
                 const auto& seg1 = segments1[index1];
-
                 for (size_t index2 = 0; index2 < segments2.size(); ++index2) {
                     const auto& seg2 = segments2[index2];
-
                     if (index1 == index2 && i == j) {
                         continue;
                     }
-
                     if (i == j && (index2 == index1 + 1 || index2 == index1 - 1)) {
                         continue;
                     }
-
                     if (doIntersect(seg1, seg2) == 1) {
                         cout << message::segment_collision(coraliId, index1, coraljId,
                                  index2) << endl;
@@ -377,7 +377,7 @@ void Simulation::update(const bool& spawnAlgae) { // chop into smaller functions
         scavengerVect[i]->setAge(scavengerVect[i]->getAge() + 1);
         checkScaMaxAge(i);
         //if(scavengerVect[i]->getStatusSca() == 1){
-        //    eatCoral(i);
+        //    getToTheCOral(i,)
         //}
     }
 
@@ -410,10 +410,6 @@ void Simulation::checkScaMaxAge(size_t i){
        scavengerVect.pop_back();
     }
 }
-
-
-
-
 
 
 
@@ -479,15 +475,16 @@ double mod(S2d vec){
 
 
 
-// void Simulation::eatCoral(size_t i){
-//     double distance;
-//     distance = sqrt(pow(scavengerVect[i]->getPos().x - LastSegmentEnd(ScavengerVect[i].getCorIdCib()).x , 2) + 
-//                     pow(scavengerVect[i]->getPos().y - LastSegmentEnd(ScavengerVect[i].getCorIdCib()).y , 2) );
-//     if(distance > delta_l) distance = delta_l;
-//     
-// 
-// .
-// }
+//void Simulation::getToTheCoral(size_t i, bool& onCoral){
+//    double distance;
+//    distance = sqrt(pow(scavengerVect[i]->getPos().x - LastSegmentEnd(ScavengerVect[i].getCorIdCib()).x , 2) + 
+//                    pow(scavengerVect[i]->getPos().y - LastSegmentEnd(ScavengerVect[i].getCorIdCib()).y , 2) );
+//    S2d direction = {LastSegmentEnd(ScavengerVect[i].getCorIdCib()).x - scavengerVect[i]->getPos().x , LastSegmentEnd(ScavengerVect[i].getCorIdCib()).y - scavengerVect[i]->getPos().y };
+//    double angle = atan2(direction.y, direction.x);
+//    if(distance > delta_l) distance = delta_l;
+//    scavengerVect[i].setPos(scavengerVect[i]->getPos().x  + distance * cos(angle), scavengerVect[i]->getPos().y  + distance * sin(angle) ) ;
+//    if(distance = delta_l) return onCoral = true;
+//}
 
 
 

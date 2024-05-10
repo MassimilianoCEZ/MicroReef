@@ -143,8 +143,8 @@ const vector<Segment> &Coral::getCorSegments() const { return corSegments; }
 Segment Coral::getSegment(unsigned i) { return corSegments[i]; }
 
 Scavenger::Scavenger(S2d posInp, unsigned ageInp, double radiusInp, bool statusScaInp,
-                     unsigned int corIdInp)
-    : Lifeform(posInp, ageInp), radius(radiusInp), corIdCib(corIdInp), notRadius(0) {
+                     unsigned int corIdInp, bool onCoralInp)
+    : Lifeform(posInp, ageInp), radius(radiusInp), corIdCib(corIdInp), notRadius(0), onCoral(onCoralInp) {
     statusSca = (statusScaInp) ? EATING : FREE;
     checkRadius();
 }

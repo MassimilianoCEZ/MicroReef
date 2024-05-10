@@ -81,9 +81,10 @@ private:
     unsigned int corIdCib;
     bool notRadius;
     void checkRadius();
+    bool onCoral;
 public:
     Scavenger(S2d posInp = {0, 0}, unsigned ageInp = 0, double radiusInp = 0,
-              bool statusScaInp = 0, unsigned int corIdInp = 0);
+              bool statusScaInp = 0, unsigned int corIdInp = 0, bool onCoralInp = false);
     unsigned int getCorIdCib() const;
     Status_sca getStatusSca() const;
     double getRadius() const;

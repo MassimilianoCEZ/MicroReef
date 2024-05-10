@@ -22,6 +22,10 @@ using namespace std;
 
 static default_random_engine e;
 
+
+double mod(S2d vec);
+
+
 void resetStatic( int& state,  unsigned& ageAlg,  unsigned& ageCor, 
                   unsigned& ageSca,  unsigned& id,  unsigned& corIdCib, 
                   double& angle,  double& length,  double& radius, 
@@ -362,28 +366,41 @@ void Simulation::update(const bool& spawnAlgae) { // chop into smaller functions
         
         coralVect[i]->setAge(coralVect[i]->getAge() + 1);
         checkCorMaxAge(i);
+        if(coralVect[i]->getStatusCor() == 0){
+            if(coralVect[i]->getBeingEaten() == 0){
+                closestScavenger(i); 
+            }
+        }
     }
 
     for(size_t i(0); i < scavengerVect.size(); ++i){
         scavengerVect[i]->setAge(scavengerVect[i]->getAge() + 1);
         checkScaMaxAge(i);
+        //if(scavengerVect[i]->getStatusSca() == 1){
+        //    eatCoral(i);
+        //}
     }
+
+
+
 
     // increment age and death of age scavenger
 }
 
 void Simulation::checkCorMaxAge(size_t i){
     if(coralVect[i]->getAge() >= max_life_cor){
-       swap(coralVect[i], coralVect[coralVect.size() - 1]);
-       coralVect.pop_back();
+        coralVect[i]->setStatusCor(DEAD);
+        // CARL     THis conditions can't be there at it will disappear only when he's officially has been fully been eated
+        //swap(coralVect[i], coralVect[coralVect.size() - 1]);
+        //coralVect.pop_back();
     }
 }
 
 
 void Simulation::checkAlgMaxAge(size_t i){
     if(algaeVect[i]->getAge() >= max_life_alg){
-       swap(algaeVect[i], algaeVect[algaeVect.size() - 1]);
-       algaeVect.pop_back();
+        swap(algaeVect[i], algaeVect[algaeVect.size() - 1]);
+        algaeVect.pop_back();
     }
 }
 
@@ -393,6 +410,100 @@ void Simulation::checkScaMaxAge(size_t i){
        scavengerVect.pop_back();
     }
 }
+
+
+
+
+
+
+
+
+
+
+void Simulation::closestScavenger(size_t i){
+    double distance(0), previousDistance(1000), angleDiff(0), previousAngleDiff;
+    S2d ScaToBase, lastSegment;
+    size_t index(0);
+    bool scavengerFound = false;
+    for(size_t j(0); j < scavengerVect.size(); ++j){
+        if(scavengerVect[j]->getStatusSca() == 1){
+            ++index;
+            continue;
+        }
+        distance = sqrt(pow(scavengerVect[j]->getPos().x - LastSegmentEnd(i).x , 2) + 
+                        pow(scavengerVect[j]->getPos().y - LastSegmentEnd(i).y , 2) );
+        ScaToBase.x = scavengerVect[j]->getPos().x + LastSegmentBase(i).x ;
+        ScaToBase.y = scavengerVect[j]->getPos().y + LastSegmentBase(i).y ;
+        lastSegment.x = LastSegmentEnd(i).x - LastSegmentBase(i).x ;
+        lastSegment.y = LastSegmentEnd(i).y - LastSegmentBase(i).y ;
+        angleDiff = acos(((ScaToBase.x * lastSegment.x) + (ScaToBase.y * lastSegment.y) / (mod(ScaToBase) * mod(lastSegment))));
+        if(distance <= previousDistance){
+            if(distance == previousDistance && angleDiff > previousAngleDiff) continue;
+            index = j;
+            previousDistance = distance;
+            previousAngleDiff = angleDiff;
+            scavengerFound = true;
+            continue;
+        }
+    }
+    //remember that after he ate he has to turn back to the free state
+    scavengerVect[index]->setStatusSca(EATING); //state in which he eats
+    scavengerVect[index]->setCorIdCib(coralVect[i]->getId());
+    if(scavengerFound == true){
+        coralVect[i]->setBeingEaten(1);
+    }
+}
+
+
+
+
+
+
+
+S2d Simulation::LastSegmentBase(size_t i){
+    return coralVect[i]->getSegment(coralVect[i]->getCorSegments().size()-1).getBase();
+}
+S2d Simulation::LastSegmentEnd(size_t i){
+    return coralVect[i]->getSegment(coralVect[i]->getCorSegments().size()-1).getEnd();
+}
+
+
+double mod(S2d vec){
+    return sqrt(pow(vec.x,2) + pow(vec.y,2) );
+}
+
+
+
+
+
+
+
+
+// void Simulation::eatCoral(size_t i){
+//     double distance;
+//     distance = sqrt(pow(scavengerVect[i]->getPos().x - LastSegmentEnd(ScavengerVect[i].getCorIdCib()).x , 2) + 
+//                     pow(scavengerVect[i]->getPos().y - LastSegmentEnd(ScavengerVect[i].getCorIdCib()).y , 2) );
+//     if(distance > delta_l) distance = delta_l;
+//     
+// 
+// .
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 unsigned int Simulation::getNbCor(){

@@ -65,6 +65,9 @@ private:
     void checkAlgMaxAge(size_t i);
     void checkCorMaxAge(size_t i);
     void checkScaMaxAge(size_t i);
+    void closestScavenger(size_t i);
+    S2d LastSegmentBase(size_t i);
+    S2d LastSegmentEnd(size_t i);
 };
 
 void drawSimulation(const Simulation& simInp);

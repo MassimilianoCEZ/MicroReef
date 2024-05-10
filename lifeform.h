@@ -53,12 +53,13 @@ private:
     Status_dev statusDev;
     unsigned int nbSeg;
     std::vector<Segment> corSegments;
+    bool beingEaten;
 
 public:
     Coral(S2d posInp = {0, 0}, unsigned ageInp = 0, unsigned int idInp = 0,
           bool statusCorInp = 1, bool dirRotCorInp = 0, bool statusDevInp = 0,
           unsigned int nbSegInp = 0, 
-          std::vector<Segment> segments = std::vector<Segment>());
+          std::vector<Segment> segments = std::vector<Segment>(), bool beingEaten = 0);
     void updateAngle(); // new
     void setSegment(Segment segInp);
     const std::vector<Segment> &getCorSegments() const;
@@ -68,6 +69,9 @@ public:
     Dir_rot_cor getDirRotCor() const;
     Status_dev getStatusDev() const;
     unsigned int getNbSeg() const;
+    void setStatusCor(Status_cor status);
+    void setBeingEaten(bool beingTasted);
+    bool getBeingEaten() const;
 };
 
 class Scavenger : public Lifeform {
@@ -84,6 +88,8 @@ public:
     Status_sca getStatusSca() const;
     double getRadius() const;
     bool getNotRadius() const;
+    void setStatusSca(Status_sca status);
+    void setCorIdCib(unsigned int id);
 };
 
 void drawAlgae(Algae algInp);

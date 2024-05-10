@@ -60,6 +60,19 @@ void Lifeform::setAge(const int &ageInp) {
     age = ageInp; 
 }
 
+void Coral::setStatusCor(Status_cor status){
+    statusCor = status;
+}
+
+void Scavenger::setStatusSca(Status_sca status){
+    statusSca = status;
+}
+
+void Scavenger::setCorIdCib(unsigned int id){
+    corIdCib = id;
+}
+
+
 Status_cor Coral::getStatusCor() const {
     return statusCor;
 }
@@ -80,13 +93,23 @@ bool Scavenger::getNotRadius() const {
 }
 
 
+void Coral::setBeingEaten(bool beingTasted){
+    beingEaten = beingTasted;
+}
+bool Coral::getBeingEaten() const{
+    return beingEaten;
+}
+
+
+
+
 Algae::Algae(S2d posInp, unsigned ageInp) : Lifeform(posInp, ageInp) {}
 
 Coral::Coral(S2d posInp, unsigned ageInp, unsigned int idInp, bool statusCorInp,
              bool dirRotCorInp, bool statusDevInp, unsigned int nbSegInp,
-             vector<Segment> segments)
+             vector<Segment> segments, bool beingEaten)
     : Lifeform(posInp, ageInp), id(idInp), nbSeg(nbSegInp),
-      corSegments(move(segments)) {
+      corSegments(move(segments)), beingEaten(beingEaten){
     statusCor = (statusCorInp) ? ALIVE : DEAD;
     dirRotCor = (dirRotCorInp) ? INVTRIGO : TRIGO;
     statusDev = (statusDevInp) ? REPRO : EXTEND;

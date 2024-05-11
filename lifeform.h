@@ -60,7 +60,10 @@ public:
           bool statusCorInp = 1, bool dirRotCorInp = 0, bool statusDevInp = 0,
           unsigned int nbSegInp = 0, 
           std::vector<Segment> segments = std::vector<Segment>(), bool beingEaten = 0);
-    void updateAngle(); // new
+    void changeDirSup(); //new x
+    void updateAngle(double deltaRot = delta_rot); // new x
+    //void setStatusCor(Status_cor status = DEAD); // new x
+    void setDirRotCor(Dir_rot_cor dirInp); // new    x
     void setSegment(Segment segInp);
     const std::vector<Segment> &getCorSegments() const;
     Segment getSegment(unsigned i);
@@ -69,7 +72,7 @@ public:
     Dir_rot_cor getDirRotCor() const;
     Status_dev getStatusDev() const;
     unsigned int getNbSeg() const;
-    void setStatusCor(Status_cor status);
+    void setStatusCor(Status_cor status = DEAD); // new x
     void setBeingEaten(bool beingTasted);
     bool getBeingEaten() const;
 };
@@ -96,5 +99,7 @@ public:
 void drawAlgae(Algae algInp);
 void drawCoral(const Coral& coralInp);
 void drawSca(const Scavenger& scaInp);
+void changeDir(Dir_rot_cor& dirInp); // new x
+
 
 #endif

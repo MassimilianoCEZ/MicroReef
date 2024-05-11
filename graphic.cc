@@ -13,7 +13,7 @@ static const std::vector<std::array<double, 3>> colors = {
     {1.0, 0.0, 0.0},     // RED
     {0.32, 0.74, 0.1},   // GREEN
     {0.0, 0.60, 1.0},    // BLUE
-    {0.79, 0.79, 0.79},  // GREY
+    {0.55, 0.55, 0.55},  // GREY
     {0.8, 0.8, 0.8}      // BLACK
 
 };

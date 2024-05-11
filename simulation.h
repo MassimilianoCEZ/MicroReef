@@ -63,11 +63,12 @@ private:
     void checkPosAgeCor(bool& errors);
     void checkPosAgeRadiusSca(bool& errors);
     void checkAlgMaxAge(size_t i);
-    void checkCorMaxAge(size_t i);
+    void checkCorMaxAge(size_t i); // changed x
     void checkScaMaxAge(size_t i);
     void closestScavenger(size_t i);
     S2d LastSegmentBase(size_t i);
     S2d LastSegmentEnd(size_t i);
+    void checkCollision(const int& i); // new x
 };
 
 void drawSimulation(const Simulation& simInp);

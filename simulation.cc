@@ -264,6 +264,42 @@ void Simulation::checkIntersect(bool &errors) {
     }
 }
 
+//// LAST SEGMENT INTERSECTIONFUNCTION
+void Simulation::checkCollision(const int& i) { // takes coral[i] in question takes nb coral (i)
+    bool error(0);
+        for (size_t j = 0; j < coralVect.size(); ++j) {
+            const auto& segments1 = coralVect[i]->getCorSegments();
+            const auto& segments2 = coralVect[j]->getCorSegments();
+            int index1 (segments1.size() - 1); // last segment
+            const auto& lastSeg = segments1[index1];
+            for (size_t index2 = 0; index2 < segments2.size(); ++index2) {
+                const auto& otherSeg = segments2[index2];
+                if (index1 == index2 && i == j) {
+                    continue;
+                }
+                if (i == j && index2 == (index1 - 1)) {
+                    continue;
+                }
+                if (doIntersect(lastSeg, otherSeg,true) == 1) {
+                    error = true;
+                }
+            }
+        }
+        S2d extremity (coralVect[i]->getSegment(coralVect[i]->getCorSegments().size()-1).getEnd());
+        if ((extremity.x > dmax - epsil_zero) or (extremity.y > dmax - epsil_zero) or
+            (extremity.x < epsil_zero) or (extremity.y < epsil_zero)) {
+                error = true;
+        }
+    if (error) {
+        int direction = coralVect[i]->getDirRotCor();
+        if(direction) { // invtrig
+            coralVect[i]->setDirRotCor(TRIGO);
+        } else { // tr
+            coralVect[i]->setDirRotCor(INVTRIGO);
+        }
+    }
+}
+////
 
 
 
@@ -340,7 +376,7 @@ void drawSimulation(const Simulation& simInp) {
 }
 
 void Simulation::update(const bool& spawnAlgae) { // chop into smaller functions of simulation!!
-    for(size_t i(0); i < algaeVect.size(); ++i){ // temporary note increment age and death of age
+    for(size_t i(0); i < algaeVect.size(); ++i){  // temporary note increment age and death of age
         algaeVect[i]->setAge(algaeVect[i]->getAge() + 1);
         checkAlgMaxAge(i);
     }
@@ -357,42 +393,35 @@ void Simulation::update(const bool& spawnAlgae) { // chop into smaller functions
     }
     // increment age + increment angle +  death of age coral
     for(size_t i(0); i < coralVect.size(); ++i){ // temporary note increment age and death of age
-        coralVect[i]->updateAngle();
-        // function in simulation for change of dirRotCor (if any error wht new testing method!!)
-            //errortests per coral : 
-                            // check extremity (for the edges)
-                            // check superpos
-                            // check intersection
-        
-        coralVect[i]->setAge(coralVect[i]->getAge() + 1);
-        checkCorMaxAge(i);
-        if(coralVect[i]->getStatusCor() == 0){
-            if(coralVect[i]->getBeingEaten() == 0){
-                closestScavenger(i); 
+        if(coralVect[i]->getStatusCor() == ALIVE) {
+            int direction (coralVect[i]->getDirRotCor());
+            coralVect[i]->updateAngle();
+            coralVect[i]->changeDirSup(); // for superposition .. but not for intersection!!
+            checkCollision(i);
+            int newDir (coralVect[i]->getDirRotCor());
+            if (direction != newDir) {
+                coralVect[i]->updateAngle();
             }
         }
+        coralVect[i]->setAge(coralVect[i]->getAge() + 1);
+        checkCorMaxAge(i);
     }
 
     for(size_t i(0); i < scavengerVect.size(); ++i){
         scavengerVect[i]->setAge(scavengerVect[i]->getAge() + 1);
         checkScaMaxAge(i);
-        //if(scavengerVect[i]->getStatusSca() == 1){
-        //    getToTheCOral(i,)
-        //}
     }
-
-
-
 
     // increment age and death of age scavenger
 }
 
 void Simulation::checkCorMaxAge(size_t i){
-    if(coralVect[i]->getAge() >= max_life_cor){
-        coralVect[i]->setStatusCor(DEAD);
-        // CARL     THis conditions can't be there at it will disappear only when he's officially has been fully been eated
-        //swap(coralVect[i], coralVect[coralVect.size() - 1]);
-        //coralVect.pop_back();
+    if(coralVect[i]->getAge() >= max_life_cor && coralVect[i]->getStatusCor()== ALIVE ){
+        coralVect[i]->setStatusCor();
+        /*
+        swap(coralVect[i], coralVect[coralVect.size() - 1]);
+        coralVect.pop_back();
+        */
     }
 }
 

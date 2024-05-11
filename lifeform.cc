@@ -115,7 +115,18 @@ Coral::Coral(S2d posInp, unsigned ageInp, unsigned int idInp, bool statusCorInp,
     statusDev = (statusDevInp) ? REPRO : EXTEND;
 }
 
-void Coral::updateAngle() { // updates the angle of one coral dependant of its state of dirRotCor (trigo or invtrigo)
+void Coral::changeDirSup() {
+    if(corSegments.size() > 1) {
+        Segment lastSeg (corSegments[corSegments.size()-1]);
+        Segment otherSeg (corSegments[corSegments.size()-2]);
+        bool superpos = supSegment(lastSeg, otherSeg);
+        if(superpos){
+            changeDir(dirRotCor);
+            }
+        }
+}
+
+void Coral::updateAngle(double deltaRot) { // updates the angle of one coral dependant of its state of dirRotCor (trigo or invtrigo)
     
     
     //if(EXTREM){ change direction}
@@ -126,14 +137,17 @@ void Coral::updateAngle() { // updates the angle of one coral dependant of its s
     S2d b((*lastSeg).getBase());
 
     if(dirRotCor){ // if invtrigo
-        a = (*lastSeg).getAngle() - delta_rot;
+        a = (*lastSeg).getAngle() - deltaRot;
 
     } else { // if trigo
-        a = (*lastSeg).getAngle() + delta_rot;
+        a = (*lastSeg).getAngle() + deltaRot;
     }
     (*lastSeg) = Segment(a,l,b);
 
-};
+}
+
+
+void Coral::setDirRotCor(Dir_rot_cor dirInp) { dirRotCor = dirInp; }
 
 void Coral::setSegment(Segment segInp) { corSegments.push_back(segInp); }
 
@@ -165,9 +179,17 @@ void drawAlgae(Algae algInp) {
 
 void drawCoral(const Coral& coralInp) {
     Rect coralRect(d_cor, d_cor, coralInp.getPos());
-    drawRect(coralRect, BLUE);
-    for (const auto &segInp : coralInp.getCorSegments()) {
-        drawSegment(segInp, BLUE);
+    Status_cor status(coralInp.getStatusCor());
+    if (status == ALIVE) {
+        drawRect(coralRect, BLUE);
+        for (const auto &segInp : coralInp.getCorSegments()) {
+            drawSegment(segInp, BLUE);
+        }
+    } else {
+        drawRect(coralRect, GREY);
+        for (const auto &segInp : coralInp.getCorSegments()) {
+            drawSegment(segInp, GREY);
+        }
     }
 }
 
@@ -176,6 +198,13 @@ void drawSca(const Scavenger& scaInp) {
     drawCircle(circleSca, RED);
 }
 
+void changeDir(Dir_rot_cor& dirInp) {
+    if(dirInp) { 
+                dirInp = TRIGO;
+            } else {
+                dirInp = INVTRIGO;
+                }
+}
 
 
 

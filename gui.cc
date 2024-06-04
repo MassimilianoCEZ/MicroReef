@@ -20,7 +20,7 @@
 using namespace std;
 
 
-
+static bool spawnAlgae = false;
 
 static void orthographicProjection(const Cairo::RefPtr<Cairo::Context>& cr, 
 									const Frame& frame);
@@ -105,31 +105,32 @@ static void orthographicProjection(const Cairo::RefPtr<Cairo::Context>& cr,
 }
 
 Gui::Gui(Simulation& simulation):
-  mainBox(Gtk::Orientation::HORIZONTAL,5),
-  interactBox(Gtk::Orientation::VERTICAL,15),
-  btnBox(Gtk::Orientation::VERTICAL,5),
-  infoBox(Gtk::Orientation::VERTICAL,5),
+  counter(0),
+  timerAdded(false),
+  disconnect(false),
+  timeoutValue(50),
+  sim(simulation),
+  mainBox(Gtk::Orientation::HORIZONTAL, 5),
+  interactBox(Gtk::Orientation::VERTICAL, 15),
+  btnBox(Gtk::Orientation::VERTICAL, 5),
+  infoBox(Gtk::Orientation::VERTICAL, 5),
   exitBtn("exit"),
   openBtn("open"), 
   saveBtn("save"), 
   startBtn("start"), 
   stepBtn("step"),
   infoLbl("Info : number of... "),
-  updateLbl("update: "),
-  nbUpdate(to_string(counter)), 
+  nbUpdate(std::to_string(counter)), 
   algLbl("algae: "), 
   corLbl("corals: "),
   scaLbl("scavengers: "),
-  birthChckBtn("Birth of algae"),
+  nbAlg(std::to_string(sim.getNbAlg())),
+  nbCor(std::to_string(sim.getNbCor())),
+  nbSca(std::to_string(sim.getNbSca())),
+  nbUpdates(std::to_string(counter)),
   generalLbl("General"),
-  nbAlg(to_string(sim.getNbAlg())),
-  nbCor(to_string(sim.getNbCor())),
-  nbSca(to_string(sim.getNbSca())),
-  nbUpdates(to_string(counter)),
-  timerAdded(false),
-	disconnect(false), 
-  timeoutValue(50),
-  sim(simulation)
+  updateLbl("update: "),
+  birthChckBtn("Birth of algae")
 {
 	set_title("Microrécif");
 	set_child(mainBox);
@@ -262,15 +263,11 @@ void Gui::onButtonClickedStart()
 void Gui::onButtonClickedStep()
 {
   counter++;
+  sim.update(spawnAlgae); // remember to ADD
   nbUpdate.set_text(std::to_string(counter));
   nbAlg.set_text(to_string(sim.getNbAlg()));
   nbCor.set_text(to_string(sim.getNbCor()));
   nbSca.set_text(to_string(sim.getNbSca()));
-  if(sim.getNbAlg()==0 and sim.getNbCor()==0 and sim.getNbSca()==0)
-  {
-		disconnect  = true;   
-		timerAdded = false;
-  }
   m_Area.queueDrawArea();
 }
 

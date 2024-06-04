@@ -14,7 +14,6 @@
 #include "constantes.h"
 #include "simulation.h"
 
-static bool spawnAlgae = false;
 
 struct Frame
 {

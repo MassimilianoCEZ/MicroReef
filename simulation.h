@@ -15,6 +15,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 
 class Simulation {
 public:
@@ -38,6 +39,7 @@ public:
     unsigned int getNbCor();
     unsigned int getNbAlg();
     unsigned int getNbSca();
+    int genUniqueId(); // new
     void clearCoralId(unsigned int id);
     void saveSimulation(std::stringstream& data);
     void saveAlgae(std::stringstream& data);
@@ -63,12 +65,30 @@ private:
     void checkPosAgeCor(bool& errors);
     void checkPosAgeRadiusSca(bool& errors);
     void checkAlgMaxAge(size_t i);
-    void checkCorMaxAge(size_t i); // changed x
+    void checkCorMaxAge(size_t i); 
     void checkScaMaxAge(size_t i);
+    size_t closestCoral(size_t i);
     void closestScavenger(size_t i);
+    void closestScavenger(size_t i, std::vector<int> scaIndexVect);
     S2d LastSegmentBase(size_t i);
     S2d LastSegmentEnd(size_t i);
-    void checkCollision(const int& i); // new x
+    void updateScavenger();
+    void updateAgeSca();
+    void getToTheCoral(size_t i);
+    void assignSingleTarget();
+    void setIndexVect(std::vector<int>& scaIndexVect, std::vector<int>& corIndexVect,
+                      bool& firstTime);
+    bool haveTheScavengerChose();
+    size_t idToIndex(unsigned int id);
+    Segment LastSegment(size_t i); 
+    void checkCollision(const int& i); 
+    void closeAlg(Segment lastSeg, int direction, int& index, double& angularDist);
+    void corRepro(int corIndex);
+    void searchEatAlg(int i); 
+    void moveOnTheCoral(size_t i);
+    void setPos(size_t i, double distance, double angle);
+    void setEnd(size_t i);
+
 };
 
 void drawSimulation(const Simulation& simInp);

@@ -9,6 +9,7 @@
 
 #include "lifeform.h"
 
+
 using namespace std;
 
 Lifeform::Lifeform(
@@ -56,12 +57,21 @@ void Lifeform::setPos(const S2d &posInp) {
      pos = posInp; 
 }
 
+void Lifeform::setPos(const double& x, const double& y) {
+     pos.x = x;
+     pos.y = y; 
+}
+
 void Lifeform::setAge(const int &ageInp) { 
     age = ageInp; 
 }
 
 void Coral::setStatusCor(Status_cor status){
     statusCor = status;
+}
+
+void Coral::setStatusDev (Status_dev status) {
+    statusDev = status;
 }
 
 void Scavenger::setStatusSca(Status_sca status){
@@ -101,6 +111,14 @@ bool Coral::getBeingEaten() const{
 }
 
 
+size_t Scavenger::getWhichSegment() const{
+    return whichSegmentEating;
+}
+void Scavenger::setWhichSegment(const size_t &index){
+    whichSegmentEating = index;
+}
+
+
 
 
 Algae::Algae(S2d posInp, unsigned ageInp) : Lifeform(posInp, ageInp) {}
@@ -126,24 +144,28 @@ void Coral::changeDirSup() {
         }
 }
 
-void Coral::updateAngle(double deltaRot) { // updates the angle of one coral dependant of its state of dirRotCor (trigo or invtrigo)
-    
-    
-    //if(EXTREM){ change direction}
-
+void Coral::updateAngle(double deltaRot) { 
     Segment* lastSeg (&corSegments[corSegments.size()-1]);
     double a(0);
     double l((*lastSeg).getLength());
     S2d b((*lastSeg).getBase());
 
-    if(dirRotCor){ // if invtrigo
+    if(dirRotCor){
         a = (*lastSeg).getAngle() - deltaRot;
 
-    } else { // if trigo
+    } else { 
         a = (*lastSeg).getAngle() + deltaRot;
     }
     (*lastSeg) = Segment(a,l,b);
 
+}
+
+void Coral::growSegment(double growth) {
+    Segment* lastSeg (&corSegments[corSegments.size()-1]);
+    double a ((*lastSeg).getAngle());
+    double l((*lastSeg).getLength() + growth);
+    S2d b((*lastSeg).getBase());
+    (*lastSeg) = Segment(a,l,b);
 }
 
 
@@ -154,11 +176,16 @@ void Coral::setSegment(Segment segInp) { corSegments.push_back(segInp); }
 
 const vector<Segment> &Coral::getCorSegments() const { return corSegments; }
 
+void Coral::popBackSegment(){
+    corSegments.pop_back();
+}
+
 Segment Coral::getSegment(unsigned i) { return corSegments[i]; }
 
 Scavenger::Scavenger(S2d posInp, unsigned ageInp, double radiusInp, bool statusScaInp,
-                     unsigned int corIdInp, bool onCoralInp)
-    : Lifeform(posInp, ageInp), radius(radiusInp), corIdCib(corIdInp), notRadius(0), onCoral(onCoralInp) {
+                     unsigned int corIdInp, bool onCoralInp, size_t segmentEating)
+    : Lifeform(posInp, ageInp), radius(radiusInp), corIdCib(corIdInp), notRadius(0), 
+      onCoral(onCoralInp), whichSegmentEating(segmentEating), possiblePrey() {
     statusSca = (statusScaInp) ? EATING : FREE;
     checkRadius();
 }
@@ -207,4 +234,35 @@ void changeDir(Dir_rot_cor& dirInp) {
 }
 
 
+
+unsigned int Scavenger::getPossiblePrey(size_t i) const{
+    return possiblePrey[i];
+}
+
+
+const vector<unsigned int> &Scavenger::getPossiblePreyVect() const {
+    return possiblePrey;
+}
+
+
+void Scavenger::addPossiblePrey(unsigned int id){
+    possiblePrey.push_back(id);
+}
+
+
+bool Scavenger::getOnCoral() const{
+    return onCoral;
+}
+void Scavenger::setOnCoral(bool isItOn){
+    onCoral = isItOn;
+}
+
+void Scavenger::clearPossiblePrey(){
+    possiblePrey.clear();
+}
+
+void Scavenger::popBackPrey(size_t i){
+    swap(possiblePrey[i], possiblePrey[possiblePrey.size() - 1]);
+    possiblePrey.pop_back();
+}
 

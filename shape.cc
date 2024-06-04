@@ -9,7 +9,7 @@
 #include <cmath>
 using namespace std;
 
-static double zero(0);
+
 
 Circle::Circle(double radiusInp, S2d baseInp) : radius(radiusInp), base(baseInp) {}
 
@@ -18,7 +18,7 @@ double Circle::getRadius() const { return radius; }
 S2d Circle::getBase() const { return base; }
 
 Rect::Rect(double heightInp, double widthInp, S2d centerInp) 
-    : height(heightInp), width(widthInp), center(centerInp) {}
+    : center(centerInp), height(heightInp), width(widthInp) {}
 
 double Rect::getHeight() const { return height; }
 
@@ -111,7 +111,7 @@ bool doIntersect(Segment s1, Segment s2, bool withEpsil){
 	double o2 = orientation(p1, q1, q2, withEpsil);
 	double o3 = orientation(p2, q2, p1, withEpsil);
 	double o4 = orientation(p2, q2, q1, withEpsil);
-	if (o1 != o2 && o3 != o4)  return true;
+	if (o1 && o2 && o3 && o4 && o1 != o2 && o3 != o4)  return true; 
 	if (o1 == 0 && onSegment(p1, p2, q1, withEpsil))  return true;
 	if (o2 == 0 && onSegment(p1, q2, q1, withEpsil))  return true;
 	if (o3 == 0 && onSegment(p2, p1, q2, withEpsil))  return true;

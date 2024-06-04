@@ -26,6 +26,7 @@ public:
     bool getNotAge() const;
     bool getNotCentered() const;
     void setPos(const S2d &posInp); 
+    void setPos(const double& x, const double& y);
     void setAge(const int &ageInp);
 
 protected:
@@ -41,7 +42,7 @@ private:
 
 class Algae : public Lifeform {
 public:
-    Algae(S2d posInp = {0, 0}, unsigned ageInp = 0); // default constructor
+    Algae(S2d posInp = {0, 0}, unsigned ageInp = 0); 
 private:
 };
 
@@ -60,10 +61,10 @@ public:
           bool statusCorInp = 1, bool dirRotCorInp = 0, bool statusDevInp = 0,
           unsigned int nbSegInp = 0, 
           std::vector<Segment> segments = std::vector<Segment>(), bool beingEaten = 0);
-    void changeDirSup(); //new x
-    void updateAngle(double deltaRot = delta_rot); // new x
-    //void setStatusCor(Status_cor status = DEAD); // new x
-    void setDirRotCor(Dir_rot_cor dirInp); // new    x
+    void changeDirSup(); 
+    void updateAngle(double deltaRot = delta_rot); 
+    void growSegment(double growth); 
+    void setDirRotCor(Dir_rot_cor dirInp); 
     void setSegment(Segment segInp);
     const std::vector<Segment> &getCorSegments() const;
     Segment getSegment(unsigned i);
@@ -72,9 +73,11 @@ public:
     Dir_rot_cor getDirRotCor() const;
     Status_dev getStatusDev() const;
     unsigned int getNbSeg() const;
-    void setStatusCor(Status_cor status = DEAD); // new x
+    void setStatusCor(Status_cor status = DEAD);
+    void setStatusDev (Status_dev status);
     void setBeingEaten(bool beingTasted);
     bool getBeingEaten() const;
+    void popBackSegment();
 };
 
 class Scavenger : public Lifeform {
@@ -85,21 +88,37 @@ private:
     bool notRadius;
     void checkRadius();
     bool onCoral;
+    size_t whichSegmentEating;
+    std::vector<unsigned int> possiblePrey;
+
 public:
     Scavenger(S2d posInp = {0, 0}, unsigned ageInp = 0, double radiusInp = 0,
-              bool statusScaInp = 0, unsigned int corIdInp = 0, bool onCoralInp = false);
+              bool statusScaInp = 0, unsigned int corIdInp = 0,bool onCoralInp = false,
+              size_t segmentEating = 0);
     unsigned int getCorIdCib() const;
     Status_sca getStatusSca() const;
     double getRadius() const;
     bool getNotRadius() const;
     void setStatusSca(Status_sca status);
     void setCorIdCib(unsigned int id);
+    unsigned int getPossiblePrey(size_t i) const;
+    const std::vector<unsigned int> &getPossiblePreyVect() const;
+    void addPossiblePrey(unsigned int id);
+    bool getOnCoral() const;
+    void setOnCoral(bool isItOn);
+    size_t getWhichSegment() const;
+    void setWhichSegment(const size_t &index);
+    void clearPossiblePrey();
+    void popBackPrey(size_t i);
 };
+
+
+
 
 void drawAlgae(Algae algInp);
 void drawCoral(const Coral& coralInp);
 void drawSca(const Scavenger& scaInp);
-void changeDir(Dir_rot_cor& dirInp); // new x
+void changeDir(Dir_rot_cor& dirInp);
 
 
 #endif

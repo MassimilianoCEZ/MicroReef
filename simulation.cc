@@ -17,6 +17,8 @@
 #include <vector>
 #include <cmath>
 #include <random>
+#include <memory>
+#include <unordered_set>
 
 using namespace std;
 
@@ -24,7 +26,8 @@ static default_random_engine e;
 
 
 double mod(S2d vec);
-
+double dist(S2d a, S2d b);
+void removeIndex(size_t i, vector<int>& indexVect );
 
 void resetStatic( int& state,  unsigned& ageAlg,  unsigned& ageCor, 
                   unsigned& ageSca,  unsigned& id,  unsigned& corIdCib, 
@@ -264,13 +267,13 @@ void Simulation::checkIntersect(bool &errors) {
     }
 }
 
-//// LAST SEGMENT INTERSECTIONFUNCTION
-void Simulation::checkCollision(const int& i) { // takes coral[i] in question takes nb coral (i)
+
+void Simulation::checkCollision(const int& i) { 
     bool error(0);
         for (size_t j = 0; j < coralVect.size(); ++j) {
             const auto& segments1 = coralVect[i]->getCorSegments();
             const auto& segments2 = coralVect[j]->getCorSegments();
-            int index1 (segments1.size() - 1); // last segment
+            int index1 (segments1.size() - 1); 
             const auto& lastSeg = segments1[index1];
             for (size_t index2 = 0; index2 < segments2.size(); ++index2) {
                 const auto& otherSeg = segments2[index2];
@@ -285,7 +288,8 @@ void Simulation::checkCollision(const int& i) { // takes coral[i] in question ta
                 }
             }
         }
-        S2d extremity (coralVect[i]->getSegment(coralVect[i]->getCorSegments().size()-1).getEnd());
+        S2d extremity (LastSegmentEnd(i));
+        
         if ((extremity.x > dmax - epsil_zero) or (extremity.y > dmax - epsil_zero) or
             (extremity.x < epsil_zero) or (extremity.y < epsil_zero)) {
                 error = true;
@@ -326,7 +330,7 @@ void Simulation::checkLength(const Segment &segmentInp,const int &idInp, bool& e
     }
 }
 
-void Simulation::checkAngle(const Segment &segmentInp, const int &idInp, bool& errors) {
+void Simulation::checkAngle(const Segment &segmentInp, const int &idInp, bool& errors){
     if ((segmentInp.getAngle() > M_PI) or (segmentInp.getAngle() < -M_PI)) {
         cout << message::segment_angle_outside(idInp, segmentInp.getAngle());
         errors = true;
@@ -375,8 +379,8 @@ void drawSimulation(const Simulation& simInp) {
     }
 }
 
-void Simulation::update(const bool& spawnAlgae) { // chop into smaller functions of simulation!!
-    for(size_t i(0); i < algaeVect.size(); ++i){  // temporary note increment age and death of age
+void Simulation::update(const bool& spawnAlgae) {
+    for(size_t i(0); i < algaeVect.size(); ++i){
         algaeVect[i]->setAge(algaeVect[i]->getAge() + 1);
         checkAlgMaxAge(i);
     }
@@ -391,37 +395,94 @@ void Simulation::update(const bool& spawnAlgae) { // chop into smaller functions
             createAlgae({algX, algY}, 1);
         }
     }
-    // increment age + increment angle +  death of age coral
-    for(size_t i(0); i < coralVect.size(); ++i){ // temporary note increment age and death of age
-        if(coralVect[i]->getStatusCor() == ALIVE) {
-            int direction (coralVect[i]->getDirRotCor());
-            coralVect[i]->updateAngle();
-            coralVect[i]->changeDirSup(); // for superposition .. but not for intersection!!
-            checkCollision(i);
-            int newDir (coralVect[i]->getDirRotCor());
-            if (direction != newDir) {
-                coralVect[i]->updateAngle();
-            }
-        }
+    for(size_t i(0); i < coralVect.size(); ++i) {
         coralVect[i]->setAge(coralVect[i]->getAge() + 1);
         checkCorMaxAge(i);
+        searchEatAlg(i);
+        if(coralVect[i]->getStatusCor() == 0){
+            if(coralVect[i]->getBeingEaten() == 0){
+                closestScavenger(i); 
+            }
+        }
     }
-
-    for(size_t i(0); i < scavengerVect.size(); ++i){
-        scavengerVect[i]->setAge(scavengerVect[i]->getAge() + 1);
-        checkScaMaxAge(i);
-    }
-
-    // increment age and death of age scavenger
+    updateScavenger();
 }
 
+int Simulation::genUniqueId() {
+    int newCorId(1);
+    unordered_set<int> existingIds;
+    for(const auto& element : coralVect) {
+        existingIds.insert(element->getId());
+    }
+    while (existingIds.find(newCorId) != existingIds.end()) {
+        ++newCorId;
+    }
+    return newCorId;
+}
+
+void Simulation::corRepro(int corIndex) {
+    if(LastSegment(corIndex).getLength() >= l_repro) {
+                    if (coralVect[corIndex]->getStatusDev() == EXTEND) {
+                        int change(-(l_repro-l_seg_interne));
+                        coralVect[corIndex]->growSegment(change);
+                        double a (LastSegment(corIndex).getAngle());
+                        int l (l_repro-l_seg_interne);
+                        S2d b (LastSegment(corIndex).getEnd());
+                        Segment seg(a,l,b);
+                        coralVect[corIndex]->setSegment(seg);
+                        coralVect[corIndex]->setStatusDev(REPRO);
+                    } else {
+                        double a(LastSegment(corIndex).getAngle());
+                        int l(l_repro-l_seg_interne);
+                        int fictive_l(l_repro-l);
+                        S2d b({LastSegment(corIndex).getBase().x + fictive_l*cos(a), 
+                               LastSegment(corIndex).getBase().y + fictive_l*sin(a)});
+                        bool newCorDir(coralVect[corIndex]->getDirRotCor());
+                        vector<Segment> corSegments = {Segment(a,l,b)};
+                        int change(-(l_repro/2));
+                        coralVect[corIndex]->growSegment(change);
+                        int newCorId(genUniqueId());
+                        createCoral(b,1,newCorId, ALIVE, newCorDir, EXTEND, 1, 
+                                     corSegments);
+                        coralVect[corIndex]->setStatusDev(EXTEND);
+                    }
+                }
+}
+
+void Simulation::searchEatAlg(int i) {
+     if(coralVect[i]->getStatusCor() == ALIVE) {
+        int direction (coralVect[i]->getDirRotCor());
+        double angularStep(delta_rot);
+        int closeAlgIndex(-1);
+        closeAlg(LastSegment(i), direction, closeAlgIndex, angularStep);            
+        coralVect[i]->updateAngle(angularStep);
+        coralVect[i]->changeDirSup();
+        checkCollision(i);
+        int newDir (coralVect[i]->getDirRotCor());
+        if (direction != newDir) {
+            coralVect[i]->updateAngle(angularStep);
+        } else {
+            if (closeAlgIndex != -1){
+                int deltaL(delta_l);
+                coralVect[i]->growSegment(deltaL);
+                checkCollision(i);
+                newDir = coralVect[i]->getDirRotCor();
+                if (direction != newDir) {
+                    coralVect[i]->growSegment(-deltaL);
+                    coralVect[i]->updateAngle(angularStep);
+                } else {
+                    algaeVect.erase(algaeVect.begin() + closeAlgIndex);
+                }
+            corRepro(i);
+            }
+        }
+    }
+}
+
+
 void Simulation::checkCorMaxAge(size_t i){
-    if(coralVect[i]->getAge() >= max_life_cor && coralVect[i]->getStatusCor()== ALIVE ){
+    if(coralVect[i]->getAge() >= max_life_cor && coralVect[i]->getStatusCor()== ALIVE){
         coralVect[i]->setStatusCor();
-        /*
-        swap(coralVect[i], coralVect[coralVect.size() - 1]);
-        coralVect.pop_back();
-        */
     }
 }
 
@@ -435,18 +496,45 @@ void Simulation::checkAlgMaxAge(size_t i){
 
 void Simulation::checkScaMaxAge(size_t i){
     if(scavengerVect[i]->getAge() >= max_life_sca){
-       swap(scavengerVect[i], scavengerVect[scavengerVect.size() - 1]);
-       scavengerVect.pop_back();
+        for(size_t j(0); j < scavengerVect[i]->getPossiblePreyVect().size(); ++i){
+            closestScavenger(idToIndex(scavengerVect[i]->getPossiblePrey(j)));
+        }
+        swap(scavengerVect[i], scavengerVect[scavengerVect.size() - 1]);
+        scavengerVect.pop_back();
     }
 }
 
 
 
+void Simulation::updateScavenger(){
+    updateAgeSca();
+    assignSingleTarget();
+    for(size_t i(0); i < scavengerVect.size(); ++i){
+        if(scavengerVect[i]->getPossiblePreyVect().size() == 1){
+            if(scavengerVect[i]->getOnCoral() == false ){
+                getToTheCoral(i);
+            }
+            if(scavengerVect[i]->getOnCoral() == true){
+                moveOnTheCoral(i);
+            }
+        }
+    }
+    for(size_t i(0); i < scavengerVect.size(); ++i){
+        scavengerVect[i]->clearPossiblePrey();
+    }
+}
 
+
+void Simulation::updateAgeSca(){
+    for(size_t i(0); i < scavengerVect.size(); ++i){
+        scavengerVect[i]->setAge(scavengerVect[i]->getAge() + 1);
+        checkScaMaxAge(i);
+    }
+}
 
 
 void Simulation::closestScavenger(size_t i){
-    double distance(0), previousDistance(1000), angleDiff(0), previousAngleDiff;
+    double distance(0), previousDistance(1000), angleDiff(0), previousAngleDiff(0);
     S2d ScaToBase, lastSegment;
     size_t index(0);
     bool scavengerFound = false;
@@ -461,7 +549,8 @@ void Simulation::closestScavenger(size_t i){
         ScaToBase.y = scavengerVect[j]->getPos().y + LastSegmentBase(i).y ;
         lastSegment.x = LastSegmentEnd(i).x - LastSegmentBase(i).x ;
         lastSegment.y = LastSegmentEnd(i).y - LastSegmentBase(i).y ;
-        angleDiff = acos(((ScaToBase.x * lastSegment.x) + (ScaToBase.y * lastSegment.y) / (mod(ScaToBase) * mod(lastSegment))));
+        angleDiff = acos(((ScaToBase.x * lastSegment.x) + (ScaToBase.y * lastSegment.y) 
+                            /(mod(ScaToBase) * mod(lastSegment))));
         if(distance <= previousDistance){
             if(distance == previousDistance && angleDiff > previousAngleDiff) continue;
             index = j;
@@ -471,17 +560,226 @@ void Simulation::closestScavenger(size_t i){
             continue;
         }
     }
-    //remember that after he ate he has to turn back to the free state
-    scavengerVect[index]->setStatusSca(EATING); //state in which he eats
-    scavengerVect[index]->setCorIdCib(coralVect[i]->getId());
     if(scavengerFound == true){
-        coralVect[i]->setBeingEaten(1);
+        scavengerVect[index]->addPossiblePrey(coralVect[i]->getId());
+    }
+}
+
+void Simulation::closestScavenger(size_t i, vector<int> scaIndexVect){
+    double distance(0), previousDistance(1000), angleDiff(0), previousAngleDiff(0);
+    S2d ScaToBase, lastSegment;
+    size_t index(0);
+    bool scavengerFound = false;
+    for(size_t j(0); j < scaIndexVect.size(); ++j){
+        if(scavengerVect[scaIndexVect[j]]->getStatusSca() == 1){
+            ++index;
+            continue;
+        }
+        distance = sqrt(pow(scavengerVect[scaIndexVect[j]]->getPos().x - 
+                             LastSegmentEnd(i).x , 2) + pow(scavengerVect[
+                                scaIndexVect[j]]->getPos().y -LastSegmentEnd(i).y,2));
+        ScaToBase.x = scavengerVect[scaIndexVect[j]]->getPos().x+ LastSegmentBase(i).x;
+        ScaToBase.y = scavengerVect[scaIndexVect[j]]->getPos().y+ LastSegmentBase(i).y;
+        lastSegment.x = LastSegmentEnd(i).x - LastSegmentBase(i).x ;
+        lastSegment.y = LastSegmentEnd(i).y - LastSegmentBase(i).y ;
+        angleDiff = acos(((ScaToBase.x * lastSegment.x) + (ScaToBase.y * lastSegment.y) 
+                            / (mod(ScaToBase) * mod(lastSegment))));
+        if(distance <= previousDistance){
+            if(distance == previousDistance && angleDiff > previousAngleDiff) continue;
+            index = j;
+            previousDistance = distance;
+            previousAngleDiff = angleDiff;
+            scavengerFound = true;
+            continue;
+        }
+    }
+    if(scavengerFound == true){
+        scavengerVect[index]->addPossiblePrey(coralVect[i]->getId());
     }
 }
 
 
 
 
+
+size_t Simulation::closestCoral(size_t i){
+    double distance(0), previousDistance(1000), angleDiff(0), previousAngleDiff(0);
+    S2d ScaToBase, lastSegment;
+    size_t index(0);
+    for(size_t j(0); j < coralVect.size(); ++j){
+        if(coralVect[j]->getStatusCor() == 1){
+            ++index;
+            continue;
+        }
+        distance = sqrt(pow(scavengerVect[i]->getPos().x - LastSegmentEnd(j).x , 2) + 
+                        pow(scavengerVect[i]->getPos().y - LastSegmentEnd(j).y , 2) );
+        ScaToBase.x = scavengerVect[i]->getPos().x + LastSegmentBase(j).x ;
+        ScaToBase.y = scavengerVect[i]->getPos().y + LastSegmentBase(j).y ;
+        lastSegment.x = LastSegmentEnd(j).x - LastSegmentBase(j).x ;
+        lastSegment.y = LastSegmentEnd(j).y - LastSegmentBase(j).y ;
+        angleDiff = acos(((ScaToBase.x * lastSegment.x) + (ScaToBase.y * lastSegment.y)
+                           / (mod(ScaToBase) * mod(lastSegment))));
+        if(distance <= previousDistance){
+            if(distance == previousDistance && angleDiff > previousAngleDiff) continue;
+            index = j;
+            previousDistance = distance;
+            previousAngleDiff = angleDiff;
+            continue;
+        }
+    }
+    return index;
+}
+
+
+
+
+void Simulation::getToTheCoral(size_t i){
+    double distance;
+    distance = sqrt(pow(scavengerVect[i]->getPos().x - LastSegmentEnd(idToIndex(
+                         scavengerVect[i]->getPossiblePrey(0))).x , 2) + 
+                    pow(scavengerVect[i]->getPos().y - LastSegmentEnd(idToIndex(
+                         scavengerVect[i]->getPossiblePrey(0))).y , 2) );
+    S2d direction = {LastSegmentEnd(idToIndex(scavengerVect[i]->getPossiblePrey(0))).x 
+                      -scavengerVect[i]->getPos().x , LastSegmentEnd(idToIndex(
+                      scavengerVect[i]->getPossiblePrey(0))).y - scavengerVect[i]->
+                      getPos().y };
+    double angle = atan2(direction.y, direction.x);
+    if(distance <= delta_l) {
+        bool itsOn = true;
+        scavengerVect[i]->setOnCoral(itsOn);
+        scavengerVect[i]->setCorIdCib(scavengerVect[i]->getPossiblePrey(0));
+    }
+    if(distance > delta_l) distance = delta_l;
+    scavengerVect[i]->setPos(scavengerVect[i]->getPos().x  + distance * cos(angle),
+                              scavengerVect[i]->getPos().y  + distance * sin(angle) ) ;
+}
+
+
+
+void Simulation::moveOnTheCoral(size_t i){
+    double distance;
+    int coralIndex (idToIndex(scavengerVect[i]->getCorIdCib())); //fixcj
+    size_t index = coralVect[idToIndex(scavengerVect[i]->getCorIdCib())]->
+                                                          getCorSegments().size();
+    scavengerVect[i]->setWhichSegment(index);
+    distance = sqrt(pow(scavengerVect[i]->getPos().x-LastSegmentBase(coralIndex).x,2)+ 
+                    pow(scavengerVect[i]->getPos().y-LastSegmentBase(coralIndex).y,2));
+    if(index == 1 && distance <= 5){ 
+        S2d direction = {LastSegmentEnd(coralIndex).x - scavengerVect[i]->getPos().x , 
+                          LastSegmentEnd(coralIndex).y - scavengerVect[i]->getPos().y};
+        double angle = atan2(direction.y, direction.x);
+        setPos(i, distance, angle);
+        scavengerVect[i]->setStatusSca(FREE);
+        coralVect[idToIndex(scavengerVect[i]->getCorIdCib())]->popBackSegment(); 
+        swap(coralVect[idToIndex(scavengerVect[i]->getCorIdCib())],
+              coralVect[coralVect.size()-1]);
+        coralVect.pop_back();
+        setEnd(i);
+        scavengerVect[i]->clearPossiblePrey();
+        return;
+    }
+    if(distance <= 5 && index > 1){
+        S2d direction = {LastSegmentBase(coralIndex).x - scavengerVect[i]->getPos().x ,
+                          LastSegmentBase(coralIndex).y -scavengerVect[i]->getPos().y};
+        double angle = atan2(direction.y, direction.x);
+        setPos(i, distance, angle);
+        coralVect[idToIndex(scavengerVect[i]->getCorIdCib())]->popBackSegment();
+        --index;
+        scavengerVect[i]->setWhichSegment(index);
+        return;
+    }
+    S2d direction = {LastSegmentBase(coralIndex).x - scavengerVect[i]->getPos().x , 
+                      LastSegmentBase(coralIndex).y - scavengerVect[i]->getPos().y };
+    double angle = atan2(direction.y, direction.x);
+    distance = delta_l;
+    setPos(i, distance, angle);
+    int negDeltaL(-delta_l);
+    coralVect[idToIndex(scavengerVect[i]->getCorIdCib())]->growSegment(negDeltaL);
+}
+
+
+void Simulation::setEnd(size_t i){
+    scavengerVect[i]->setCorIdCib(0);
+    scavengerVect[i]->setOnCoral(false);
+}
+
+void Simulation::setPos(size_t i, double distance, double angle){
+    scavengerVect[i]->setPos(scavengerVect[i]->getPos().x  + distance * cos(angle),
+                              scavengerVect[i]->getPos().y  + distance * sin(angle) );
+}
+
+void Simulation::assignSingleTarget(){
+    static vector<int> scaIndexVect, corIndexVect;
+    static bool firstTime = true;
+    size_t closestCoralIndex = 0;
+    static int counter(0);
+    ++ counter;
+    if(firstTime == true) setIndexVect(scaIndexVect, corIndexVect, firstTime);
+    if(haveTheScavengerChose() == true || counter == 100){
+        scaIndexVect.clear();
+        corIndexVect.clear();
+        firstTime = true;
+        counter = 0;
+        return;
+    }
+    for(size_t i(0); i < scaIndexVect.size(); ++i){
+        if(scavengerVect[i]->getOnCoral() == true){
+            removeIndex(i, scaIndexVect);
+        }
+        if(scavengerVect[i]->getPossiblePreyVect().size() <= 1) continue;
+        if(scavengerVect[i]->getPossiblePreyVect().size() >= 2){
+            closestCoralIndex = closestCoral(i);
+            removeIndex(closestCoralIndex, corIndexVect);
+            removeIndex(i, scaIndexVect);
+            for(size_t k(0); k < scavengerVect[i]->getPossiblePreyVect().size(); ++k ){
+                if(scavengerVect[i]->getPossiblePreyVect()[k] != 
+                   coralVect[closestCoralIndex]->getId()){
+                    scavengerVect[i]->popBackPrey(k);
+                }
+            }
+            for(size_t j(0); j < corIndexVect.size(); ++j ){
+                closestScavenger(corIndexVect[j], scaIndexVect);
+                assignSingleTarget();
+            }
+            
+        }
+    }
+}
+
+
+
+
+
+void Simulation::setIndexVect(vector<int>& scaIndexVect, vector<int>& corIndexVect,
+                               bool& firstTime){
+    int j(0), l(0);
+    for(size_t i(0); i < scavengerVect.size(); ++i){
+        scaIndexVect.push_back(j);
+        ++j;
+    }
+    for(size_t k(0); k < coralVect.size(); ++k){
+        corIndexVect.push_back(l);
+        ++k;   
+    }
+    firstTime = false;
+}
+
+bool Simulation::haveTheScavengerChose(){
+    bool didTheyChoose = true;
+    for(size_t i(0); i < scavengerVect.size(); ++i){
+        if(scavengerVect[i]->getPossiblePreyVect().size() >= 2){
+            didTheyChoose = false;
+        }
+    }
+    return didTheyChoose;
+}
+
+
+
+void removeIndex(size_t i, vector<int>& indexVect){
+    swap(indexVect[i], indexVect[indexVect.size() - 1]);
+    indexVect.pop_back();
+}
 
 
 
@@ -491,45 +789,52 @@ S2d Simulation::LastSegmentBase(size_t i){
 S2d Simulation::LastSegmentEnd(size_t i){
     return coralVect[i]->getSegment(coralVect[i]->getCorSegments().size()-1).getEnd();
 }
+Segment Simulation::LastSegment(size_t i){
+    return coralVect[i]->getSegment(coralVect[i]->getCorSegments().size()-1);
+}
+
+void Simulation::closeAlg(Segment lastSeg, int direction, int& index, 
+                           double& angularDist){
+    int closerAlgIndex(-1);
+    double smallerDif(delta_rot);
+    for(size_t i(0); i<algaeVect.size(); i++){
+        S2d posAlg (algaeVect[i]->getPos());
+        S2d baseCor (lastSeg.getBase());
+        double distAlgBase (dist(posAlg,baseCor));
+        if (distAlgBase <= lastSeg.getLength()) {
+            S2d endCor(lastSeg.getEnd());
+            double BAx = endCor.x - baseCor.x;
+            double BAy = endCor.y - baseCor.y;
+            double BCx = posAlg.x - baseCor.x;
+            double BCy = posAlg.y - baseCor.y;
+            double angleBA = atan2(BAy, BAx);
+            double angleBC = atan2(BCy, BCx); 
+            double dif (angleBC-angleBA); 
+            if(abs(dif) <= delta_rot) {
+                if(dif >= 0 && direction == TRIGO) {
+                    if(abs(dif)<smallerDif) { smallerDif=dif;closerAlgIndex = i;}
+                } else if(dif <= 0 && direction == INVTRIGO) {
+                    if(abs(dif)<smallerDif) { smallerDif=dif;closerAlgIndex = i;}
+                }
+             }
+        }
+    }
+    if(closerAlgIndex != -1) {
+        index = closerAlgIndex;
+        angularDist = smallerDif;
+    }
+}
+
 
 
 double mod(S2d vec){
     return sqrt(pow(vec.x,2) + pow(vec.y,2) );
 }
-
-
-
-
-
-
-
-
-//void Simulation::getToTheCoral(size_t i, bool& onCoral){
-//    double distance;
-//    distance = sqrt(pow(scavengerVect[i]->getPos().x - LastSegmentEnd(ScavengerVect[i].getCorIdCib()).x , 2) + 
-//                    pow(scavengerVect[i]->getPos().y - LastSegmentEnd(ScavengerVect[i].getCorIdCib()).y , 2) );
-//    S2d direction = {LastSegmentEnd(ScavengerVect[i].getCorIdCib()).x - scavengerVect[i]->getPos().x , LastSegmentEnd(ScavengerVect[i].getCorIdCib()).y - scavengerVect[i]->getPos().y };
-//    double angle = atan2(direction.y, direction.x);
-//    if(distance > delta_l) distance = delta_l;
-//    scavengerVect[i].setPos(scavengerVect[i]->getPos().x  + distance * cos(angle), scavengerVect[i]->getPos().y  + distance * sin(angle) ) ;
-//    if(distance = delta_l) return onCoral = true;
-//}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+double dist(S2d a, S2d b) {
+    double distX(b.x-a.x);
+    double distY(b.y-a.y);
+    return sqrt(pow(distX,2) + pow(distY,2));
+}
 
 
 unsigned int Simulation::getNbCor(){
@@ -632,7 +937,6 @@ void Simulation::checkPosAgeCor(bool& errors){
 
 
 
-
 void Simulation::checkPosAgeRadiusSca(bool& errors){
     for(auto& sca : scavengerVect){
         if(sca->getNotAge() == 1 || sca->getNotCentered() == 1){
@@ -671,4 +975,16 @@ void resetStatic( int& state,  unsigned& ageAlg,  unsigned& ageCor,
         k = 0;
         corSegments.clear();
     }   
+}
+
+
+
+
+size_t Simulation::idToIndex(unsigned int id){
+    for(size_t j(0); j < coralVect.size(); ++j){
+        if(id == coralVect[j]->getId()){
+            return j;
+        }
+    }
+    return 0; 
 }
